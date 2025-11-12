@@ -12,8 +12,8 @@ const DoctorForm: React.FC<Props> = ({ selectedDoctor, onSave }) => {
   const [formData, setFormData] = useState<Doctor>({
     doc_id: "",
     doctorName: "",
-    experience:0,
-    address:"",
+    experience: 0,
+    address: "",
     gender: "",
     phone: "",
     email: "",
@@ -24,24 +24,25 @@ const DoctorForm: React.FC<Props> = ({ selectedDoctor, onSave }) => {
     timeSlot: "",
     receptionist: "",
     details: "",
-    picture: null,
+    profilePic: "", // ✅ store base64 string here
   });
-const validateForm = (): boolean => {
+
+  const validateForm = (): boolean => {
     const requiredFields = [
       "doc_id",
       "doctorName",
-      "department",
+      // "department",
       "gender",
       "phone",
       "specialization",
       "experience",
       "email",
       "address",
-      "services",
-      "fee",
-      "timeSlot",
-      "receptionist",
-      "details",
+      // "services",
+      // "fee",
+      // "timeSlot",
+      // "receptionist",
+      // "details",
     ];
 
     for (let field of requiredFields) {
@@ -55,7 +56,6 @@ const validateForm = (): boolean => {
       }
     }
 
-    // Basic Email validation
     if (!/\S+@\S+\.\S+/.test(formData.email)) {
       Swal.fire({
         icon: "error",
@@ -65,7 +65,6 @@ const validateForm = (): boolean => {
       return false;
     }
 
-    // Phone validation
     if (!/^\d{10}$/.test(formData.phone)) {
       Swal.fire({
         icon: "error",
@@ -77,47 +76,60 @@ const validateForm = (): boolean => {
 
     return true;
   };
+
   useEffect(() => {
-  if (selectedDoctor) {
-    setFormData(selectedDoctor); // Prefill form with selected doctor data
-  } else {
-    // If no doctor selected (fresh add), reset form and generate new ID
-    const newDocID = generateNextDocID(3, "2", "ORG001");
-    setFormData({
-      doc_id: newDocID,
-      doctorName: "",
-      experience: 0,
-      address: "",
-      gender: "",
-      phone: "",
-      email: "",
-      department: "",
-      specialization: "",
-      services: "",
-      fee: "",
-      timeSlot: "",
-      receptionist: "",
-      details: "",
-      picture: null,
-    });
-  }
-}, [selectedDoctor]);
+    if (selectedDoctor) {
+      setFormData(selectedDoctor);
+    } else {
+      const newDocID = generateNextDocID(3, "2", "ORG001");
+      const savedPic = localStorage.getItem("doctorProfilePic"); // ✅ restore saved image
+      setFormData({
+        doc_id: newDocID,
+        doctorName: "",
+        experience: 0,
+        address: "",
+        gender: "",
+        phone: "",
+        email: "",
+        department: "",
+        specialization: "",
+        services: "",
+        fee: "",
+        timeSlot: "",
+        receptionist: "",
+        details: "",
+        profilePic: savedPic || "",
+      });
+    }
+  }, [selectedDoctor]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const { name, value, files } = e.target as HTMLInputElement;
+
+    // ✅ Handle image upload (convert to Base64 + store in localStorage)
+    if (name === "profilePic" && files && files[0]) {
+      const file = files[0];
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setFormData((prev) => ({ ...prev, profilePic: base64String }));
+        localStorage.setItem("doctorProfilePic", base64String);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
- const handleSubmit = (e: React.FormEvent) => {
-  e.preventDefault();
-if (!validateForm()) return;
-  // const isUpdate = !!formData.id; // check if doctor has an ID
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateForm()) return;
 
-  onSave(formData);
+    onSave(formData);
 
-   Swal.fire({
+    Swal.fire({
       icon: selectedDoctor ? "info" : "success",
       title: selectedDoctor ? "Doctor Updated!" : "Doctor Added!",
       text: selectedDoctor
@@ -126,10 +138,8 @@ if (!validateForm()) return;
       confirmButtonColor: "#3085d6",
     });
 
-  console.log("Doctor Data:", formData);
-};
-
-
+    console.log("Doctor Data:", formData);
+  };
 
   return (
     <div className="container my-4">
@@ -138,105 +148,212 @@ if (!validateForm()) return;
           <h4 className="text-center mb-3">
             {selectedDoctor ? "Edit Doctor" : "Add Doctor"}
           </h4>
+
           <form onSubmit={handleSubmit}>
             <div className="row g-3">
+              {/* Registration Number */}
               <div className="col-md-6">
-                <label className="form-label">Registration Number<span style={{ color: 'red' }}>*</span><span style={{ color: 'red' }}>*</span></label>
-                <input
-                  type="text"
-                  className="form-control"
-                  name="registrationNumber"
-                  value={formData.doc_id}
-                  onChange={handleChange}
-                  required disabled
-                />
+                <label className="form-label">
+                  Registration Number<span style={{ color: "red" }}>*</span>
+                </label>
+                <div className="input-group">
+                  <span className="input-group-text bg-light">
+                    <i className="fas fa-hashtag text-secondary"></i>
+                  </span>
+                  <input
+                    type="text"
+                    className="form-control"
+                    name="registrationNumber"
+                    value={formData.doc_id}
+                    onChange={handleChange}
+                    required
+                    disabled
+                  />
+                </div>
               </div>
 
+              {/* Doctor Name */}
               <div className="col-md-6">
-                <label className="form-label">Doctor Name<span style={{ color: 'red' }}>*</span></label>
-                <input
-                  type="text"
-                  className="form-control"
-                  name="doctorName"
-                  value={formData.doctorName}
-                  onChange={handleChange}
-                  required
-                />
+                <label className="form-label">
+                  Doctor Name<span style={{ color: "red" }}>*</span>
+                </label>
+                <div className="input-group">
+                  <span className="input-group-text bg-light">
+                    <i className="fas fa-user text-secondary"></i>
+                  </span>
+                  <input
+                    type="text"
+                    className="form-control"
+                    name="doctorName"
+                    value={formData.doctorName}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
               </div>
 
+              {/* Gender */}
               <div className="col-md-6">
-                <label className="form-label">Gender<span style={{ color: 'red' }}>*</span></label>
-                <select
-                  className="form-select"
-                  name="gender"
-                  value={formData.gender}
-                  onChange={handleChange}
-                  required
-                >
-                  <option value="">Select Gender</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                </select>
+                <label className="form-label">
+                  Gender<span style={{ color: "red" }}>*</span>
+                </label>
+                <div className="input-group">
+                  <span className="input-group-text bg-light">
+                    <i className="fas fa-venus-mars text-secondary"></i>
+                  </span>
+                  <select
+                    className="form-select"
+                    name="gender"
+                    value={formData.gender}
+                    onChange={handleChange}
+                    required
+                  >
+                    <option value="">Select Gender</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                  </select>
+                </div>
               </div>
 
+              {/* Phone */}
               <div className="col-md-6">
-                <label className="form-label">Phone<span style={{ color: 'red' }}>*</span></label>
-                <input
-                  type="text"
-                  className="form-control"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  required
-                />
+                <label className="form-label">
+                  Phone<span style={{ color: "red" }}>*</span>
+                </label>
+                <div className="input-group">
+                  <span className="input-group-text bg-light">
+                    <i className="fas fa-phone-alt text-secondary"></i>
+                  </span>
+                  <input
+                    type="text"
+                    className="form-control"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
               </div>
 
+              {/* Specialization */}
               <div className="col-md-6">
-                <label className="form-label">Specialization<span style={{ color: 'red' }}>*</span></label>
-                <input
-                  type="text"
-                  className="form-control"
-                  name="specialization"
-                  value={formData.specialization}
-                  onChange={handleChange}
-                  required
-                />
+                <label className="form-label">
+                  Specialization<span style={{ color: "red" }}>*</span>
+                </label>
+                <div className="input-group">
+                  <span className="input-group-text bg-light">
+                    <i className="fas fa-notes-medical text-secondary"></i>
+                  </span>
+                  <input
+                    type="text"
+                    className="form-control"
+                    name="specialization"
+                    value={formData.specialization}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
               </div>
 
+              {/* Experience */}
               <div className="col-md-6">
-                <label className="form-label">Experience (Years)<span style={{ color: 'red' }}>*</span></label>
-                <input
-                  type="number"
-                  className="form-control"
-                  name="experience"
-                  value={formData.experience}
-                  onChange={handleChange}
-                  required
-                />
+                <label className="form-label">
+                  Experience (Years)<span style={{ color: "red" }}>*</span>
+                </label>
+                <div className="input-group">
+                  <span className="input-group-text bg-light">
+                    <i className="fas fa-calendar-check text-secondary"></i>
+                  </span>
+                  <input
+                    type="number"
+                    className="form-control"
+                    name="experience"
+                    value={formData.experience}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
               </div>
 
+              {/* Email */}
               <div className="col-md-6">
-                <label className="form-label">Email<span style={{ color: 'red' }}>*</span></label>
-                <input
-                  type="email"
-                  className="form-control"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                />
+                <label className="form-label">
+                  Email<span style={{ color: "red" }}>*</span>
+                </label>
+                <div className="input-group">
+                  <span className="input-group-text bg-light">
+                    <i className="fas fa-at text-secondary"></i>
+                  </span>
+                  <input
+                    type="email"
+                    className="form-control"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
               </div>
 
+              {/* Profile Picture (Base64 + localStorage) */}
               <div className="col-md-6">
-                <label className="form-label">Address<span style={{ color: 'red' }}>*</span></label>
-                <input
-                  type="text"
-                  className="form-control"
-                  name="address"
-                  value={formData.address}
-                  onChange={handleChange}
-                  required
-                />
+                <label className="form-label">
+                  Profile Picture<span style={{ color: "red" }}>*</span>
+                </label>
+                <div className="input-group">
+                  <span className="input-group-text bg-light">
+                    <i className="fas fa-upload text-secondary"></i>
+                  </span>
+                  <input
+                    type="file"
+                    className="form-control"
+                    name="profilePic"
+                    accept="image/*"
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+
+                {formData.profilePic && (
+                  <div className="mt-2 text-center">
+                    <img
+                      src={
+                        formData.profilePic instanceof File
+                          ? URL.createObjectURL(formData.profilePic)
+                          : formData.profilePic
+                      }
+                      alt="Profile Preview"
+                      style={{
+                        width: "100px",
+                        height: "100px",
+                        objectFit: "cover",
+                        borderRadius: "50%",
+                        border: "2px solid #ddd",
+                      }}
+                    />
+                  </div>
+                )}
+
+              </div>
+
+              {/* Address */}
+              <div className="col-md-6">
+                <label className="form-label">
+                  Address<span style={{ color: "red" }}>*</span>
+                </label>
+                <div className="input-group">
+                  <span className="input-group-text bg-light">
+                    <i className="fas fa-home text-secondary"></i>
+                  </span>
+                  <input
+                    type="text"
+                    className="form-control"
+                    name="address"
+                    value={formData.address}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
               </div>
             </div>
 

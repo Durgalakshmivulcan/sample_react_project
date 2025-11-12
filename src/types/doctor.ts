@@ -14,5 +14,5 @@ export interface Doctor {
   timeSlot: string;
   receptionist: string;
   details: string;
-  picture: File | null; // 👈 this should be File | null, not just null
+  profilePic: File | string | null; // ✅ allows File, Base64 string, or null
 }

@@ -40,19 +40,25 @@ const DoctorList: React.FC<Props> = ({ doctors, onEdit, onDelete }) => {
                   <td>{doctor.email}</td>
                   <td>{doctor.address}</td>
                   <td>
-                    <button
-                      className="btn btn-sm btn-warning me-2"
-                      onClick={() => onEdit(doctor)}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      className="btn btn-sm btn-danger"
-                      onClick={() => onDelete(doctor.id!)}
-                    >
-                      Delete
-                    </button>
+                    <div className="d-flex justify-content-center align-items-center gap-2">
+                      <button
+                        className="btn btn-sm btn-primary"
+                        onClick={() => onEdit(doctor)}
+                        title="Edit"
+                      >
+                        <i className="fas fa-edit"></i>
+                      </button>
+
+                      <button
+                        className="btn btn-sm btn-danger"
+                        onClick={() => onDelete(doctor.id!)}
+                        title="Delete"
+                      >
+                        <i className="fas fa-trash-alt"></i>
+                      </button>
+                    </div>
                   </td>
+
                 </tr>
               ))
             ) : (
