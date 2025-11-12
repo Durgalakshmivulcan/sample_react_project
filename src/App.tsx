@@ -1,26 +1,46 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { useState } from "react";
+import DoctorForm from "./components/DoctorForm"; // ✅ corrected path
+import DoctorList from "./components/DoctorList"; // ✅ corrected path
+import { Doctor } from "./types/doctor"; // ✅ doctor type
 
-function App() {
+const App: React.FC = () => {
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
+
+  const handleSave = (doctor: Doctor) => {
+    if (doctor.id) {
+      // Update existing doctor
+      setDoctors((prev) =>
+        prev.map((d) => (d.id === doctor.id ? doctor : d))
+      );
+    } else {
+      // Add new doctor
+      const newDoctor = { ...doctor, id: Date.now() };
+      setDoctors((prev) => [...prev, newDoctor]);
+    }
+    setSelectedDoctor(null);
+  };
+
+  const handleDelete = (id: number) => {
+    setDoctors((prev) => prev.filter((d) => d.id !== id));
+  };
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div>
+      <h1 style={{ textAlign: "center", margin: "20px 0" }}>
+        🩺 Doctor Registration Form
+      </h1>
+      {/* ✅ Make sure DoctorForm accepts selectedDoctor & onSave props */}
+      <DoctorForm selectedDoctor={selectedDoctor} onSave={handleSave} />
+
+      {/* ✅ Make sure DoctorList accepts doctors, onEdit, and onDelete props */}
+      <DoctorList
+        doctors={doctors}
+        onEdit={setSelectedDoctor}
+        onDelete={handleDelete}
+      />
     </div>
   );
-}
+};
 
 export default App;
